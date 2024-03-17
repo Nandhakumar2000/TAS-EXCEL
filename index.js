@@ -17,6 +17,8 @@ const config = {
       trustServerCertificate: true,
     },
   }
+;  
+
 
     var server = http.createServer(async function(request, response) {  
         var path = url.parse(request.url).pathname;  
@@ -61,9 +63,9 @@ const config = {
                 console.log("fileName", queryData.fileName);
                 new sql.Request().query(
                     `SELECT * FROM (
-                        SELECT *, ROW_NUMBER() OVER(PARTITION BY REPORTDATE ORDER BY id) as rn
-                        FROM HIST
-                        WHERE REPORTDATE IN ('${sDate}', '${eDate}')
+                        SELECT *, ROW_NUMBER() OVER(PARTITION BY REPORTDATE ORDER BY (SELECT NULL)) as rn
+                        FROM your_table
+                        WHERE REPORTDATE IN (${queryData.sDate}, ${queryData.eDate}) AND DID = ${queryData.tNo}
                     ) t
                     WHERE rn = 1`,
                     function (err, result) {
@@ -119,7 +121,6 @@ sql
 .connect(config)
 .then((pool) => {
     console.log("DB Connected!");
-    logMessage();
 })
 .catch((err) => {
     console.log("err", err);
