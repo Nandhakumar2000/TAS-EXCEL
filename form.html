@@ -1,0 +1,71 @@
+<html>  
+  
+<head>  
+    <TITLE>TAS</TITLE>  
+</head>  
+  
+<body>  
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        #form-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px solid black;
+            padding: 20px;
+            width: 300px;
+        }
+        input, select{
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+            font-family: "Times New Roman", Times, serif;
+        }
+        button {
+            background-color: #04AA6D;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            float: right;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+    </style>
+    <script>
+       function redirect(){
+        var sDate = document.getElementById("sDate").value;
+        var eDate = document.getElementById("eDate").value;
+        var fileName = document.getElementById("fileName").value;
+        var tNo = document.getElementById("tNo").value;
+        window.open("http://localhost:8082/data?sDate="+sDate+"&eDate="+eDate+"&fileName="+fileName+"&tNo="+tNo, "_blank");
+       }
+    </script>
+    <div id="form-container">
+        <label for="fname">Start Date:</label><br/>
+        <input type="datetime-local" id="sDate" name="sDate"><br/>
+        <label for="lname">End Date:</label><br/>
+        <input type="datetime-local" id="eDate" name="eDate"><br/>
+        <label for="dropdown">Choose a Template:</label><br>
+        <select id="fileName" name="fileName">
+            <option value="OTR_for_PLT">OTR for PLT</option>
+            <option value="OTR_For_ITT_Dispatch_Tank">OTR For ITT Dispatch Tank</option>
+            <option value="OTR_For_ITT_Receipt_Tank">OTR For ITT Receipt Tank</option>
+            <option value="OTR_For_Receipt_Operation">OTR For Receipt Operation</option>
+        </select><br/>
+        <label for="lname">Tank No:</label><br/>
+        <input type="text" id="tNo" name="tNo"><br/>
+        <button onclick="redirect()">Submit</button>
+  </div>
+</body>  
+  
+</html>  
