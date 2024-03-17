@@ -191,7 +191,7 @@ case '/get_device_data':
                     break; 
 
 
- fetch("http://localhost:8082/get_data?sDate="+sDate+"&eDate="+eDate+"&fileName="+fileName+"&tNo="+tNo, {
+ fetch("http://localhost:8082/get_device_data, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json"
