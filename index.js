@@ -190,26 +190,10 @@ case '/get_device_data':
                     }
                     break; 
 
-
- fetch("http://localhost:8082/get_device_data, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            }).then((response) => response.json()).then((data) => {
-            console.log("Data", data);
-            }).catch((error) => console.log(error))
-
-
-                     // Remove any existing options
-        select.innerHTML = "";
-
-        // Add new options from the JSON object
-        for(var i = 0; i < json.length; i++) {
-            var option = document.createElement("option");
-            option.value = json[i].id;
-            option.text = json[i].name;
-            select.appendChild(option);
-        }
-
-                `SELECT * FROM HIST WHERE (REPORTDATE, id) IN ((SELECT REPORTDATE, MIN(id) FROM HIST WHERE CAST(REPORTDATE AS NVARCHAR(50)) = '${sDate}'), (SELECT REPORTDATE, MIN(id) FROM HIST WHERE CAST(REPORTDATE AS NVARCHAR(50)) = '${eDate}') )`,
+const pathimg = require('path');
+ case '/tas.jpg':  
+                const imagePath = pathimg.join(__dirname, 'IMG.jpg');
+                const imageStream = fs.createReadStream(imagePath);
+                response.writeHead(200, {'Content-Type': 'image/jpeg' });
+                imageStream.pipe(response);
+                break;
