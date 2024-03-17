@@ -5,9 +5,6 @@
 </head>  
   
 <body>
-    <img src="tas.jpg">
-   
-    <img src="IMG-20230304-WA0000.jpg" id="bpcl-img"></img>
     <style>
         body {
             font-family: Arial, Helvetica, sans-serif;
@@ -43,6 +40,22 @@
             float: right;
             font-family: Arial, Helvetica, sans-serif;
         }
+
+        #img_container{
+            display: flex;
+            justify-content: space-between;
+        }
+        /* #bpcl-img{
+            width: 800px;
+        } */
+        #img_container img{
+            width: 100px;
+            height: 100px;
+        }
+        h1{
+           text-align: center;
+           margin-top: 65vh;
+        }
     </style>
     <script>
        function redirect(){
@@ -58,9 +71,7 @@
                 }
             }).then((response) => {
                 if(response.status == 200){
-                          window.alert(
-                    "Record updated"
-                          )
+                          
                 } else if (response.status === 401){
                     window.alert(
                         "No record"
@@ -98,6 +109,11 @@ for(var i = 0; i < data.length; i++) {
     getDevices();
 
     </script>
+    <div id="img_container">
+      <img src="http://localhost:8082/tas.jpg" id="tas-img">
+      <img src="http://localhost:8082/BPCL.png" id="bpcl-img" style="width: 300px; height: auto;">
+      <img src="http://localhost:8082/OTECH.jpg" id="otech-img">
+    </div>
     <div id="form-container">
         <label for="fname">Start Date:</label><br/>
         <input type="datetime-local" id="sDate" name="sDate"><br/>
@@ -115,7 +131,7 @@ for(var i = 0; i < data.length; i++) {
         </select><br/>
         <button onclick="redirect()">Submit</button>
   </div>
+  <h1>BPCL VADINAR REPORTS</h1>
 </body>  
   
 </html>  
-

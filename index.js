@@ -4,17 +4,17 @@ var fs = require('fs');
 var url = require('url');  
 const XlsxPopulate = require('xlsx-populate');
 var http = require('http');
-
-const app = express();
-const port = 3000;
+const pathimg = require('path');
+const {exec} = require('child_process');
 
 const config = {
-    user: "nandha",
-    password: "Nandhu12345",
-    server: "tas.czi8i44g0r2m.ap-south-1.rds.amazonaws.com",
+    user: "sa",
+    password: "ssmits",
+    server: "TFMS1",
     database: "TFMS",
     options: {
       trustServerCertificate: true,
+      encrypt: false,
     },
   }
 
@@ -64,58 +64,115 @@ const config = {
                 console.log("queryData.sDate", toUtcDate(queryData.sDate).replace('Z','').replace('T',' '));
                 console.log("queryData.eDate", toUtcDate(queryData.sDate)); 
                 console.log("fileName", queryData.fileName);
-                
                 new sql.Request()
-                .input('sDate', sql.NVarChar, toUtcDate(queryData.sDate).replace('Z','').replace('T',' '))
-                .input('eDate', sql.NVarChar, toUtcDate(queryData.eDate).replace('Z','').replace('T',' '))
-                .input('tNo', sql.Int, queryData.tNo)
                 .query(
                     `
                     SELECT * FROM (
-                        SELECT *, ROW_NUMBER() OVER(PARTITION BY CAST(REPORTDATE AS NVARCHAR(50)) ORDER BY (SELECT NULL)) as rn
+                        SELECT *, ROW_NUMBER() OVER(PARTITION BY REPORTDATE ORDER BY (SELECT NULL)) as rn
                         FROM HIST
-                        WHERE CAST(REPORTDATE AS NVARCHAR(50)) BETWEEN @sDate AND @eDate AND DID = @tNo
+                        WHERE REPORTDATE BETWEEN '${toUtcDate(queryData.sDate).replace('Z','').replace('T',' ')}' AND '${toUtcDate(queryData.eDate).replace('Z','').replace('T',' ')}' AND DEVICENAME = '${queryData.tNo}'
                     ) t
                     WHERE rn = 1
                 `,
                     function (err, result) {
                     if (err) throw err;
+                    console.log('result', result);
                     if (result?.recordset?.length == 2) {
                        const sdata = result.recordset[0];
                        const edata = result.recordset[1];
                     XlsxPopulate.fromFileAsync(`${queryData.fileName}.xlsx`)
                         .then(workbook => {
-                            const sheet = workbook.sheet(0);
-                            sheet.cell('E8').value('Hello'); // Date
-                            sheet.cell('E9').value(queryData.sDate); // Time
+                          //  const sheet = workbook.sheet(0);
+                            const sheet = workbook.addSheet("New");
+                            sheet.cell('E4').value(`Tank No : ${queryData.tNo}`)
+                            sheet.cell('F32').value(`Tank No : ${queryData.tNo}`)
+                            sheet.cell('E8').value(new Date(queryData.sDate).getDate() + "." + new Date(queryData.sDate).getMonth() + '.'+ new Date(queryData.sDate).getFullYear()); // Date
+                            sheet.cell('E9').value(new Date(queryData.sDate).getHours() + ":" + new Date(queryData.sDate).getMinutes()); // Time
                             sheet.cell('E11').value(sdata['PRIMARYLVL']); // Gross Dip
-                            sheet.cell('E12').value(sdata['TEMP']); // TEMP
+                            sheet.cell('E13').value(sdata['TEMP']); // TEMP
                             sheet.cell('E21').value(sdata['DENSITY']); // DENSITY
                             sheet.cell('E26').value(sdata['BSW']); // S+W
                             sheet.cell('E27').value(sdata['WATERLVL']); // WATER
 
-                            sheet.cell('G8').value(queryData.eDate); // Date
-                            sheet.cell('G9').value(queryData.eDate); // Time
+                            sheet.cell('G8').value(new Date(queryData.eDate).getDate() + "." + new Date(queryData.eDate).getMonth() + '.'+ new Date(queryData.eDate).getFullYear()); // Date
+                            sheet.cell('G9').value(new Date(queryData.eDate).getHours() + ":" + new Date(queryData.eDate).getMinutes()); // Time
                             sheet.cell('G11').value(edata['PRIMARYLVL']); // Gross Dip
-                            sheet.cell('G12').value(edata['TEMP']); // TEMP
+                            sheet.cell('G13').value(edata['TEMP']); // TEMP
                             sheet.cell('G21').value(edata['DENSITY']); // DENSITY
                             sheet.cell('G26').value(edata['BSW']); // S+W
                             sheet.cell('G27').value(edata['WATERLVL']); // WATER
-                            console.log("written")
-                            return workbook.toFileAsync(`${queryData.fileName}1.xlsx`);
+                            let path = `../../Reports/${queryData.fileName}-${new Date(queryData.sDate).getDate() + "-" + new Date(queryData.sDate).getMonth() + '-'+ new Date(queryData.sDate).getFullYear() + "--" + new Date(queryData.eDate).getDate() + "." + new Date(queryData.eDate).getMonth() + '.'+ new Date(queryData.eDate).getFullYear() + "__" + Math.floor(Math.random() * 10000)}.xlsx`;
+                             workbook.toFileAsync(path).then(()=>{
+                              
+                                    exec(`start excel ${path}`, (err, stdout, stderr)=>
+                                    {
+                                        if(err){
+                                            console.log("err", err);
+                                        } else{
+                                            console.log("File opened")
+                                        }
+                                    })
+                                
+                             })
                         }).then(() => {
                        response.writeHead(200, {  
                             'Content-Type': 'application/json'  
                         });
-                        response.write(JSON.stringify(result.recordset));  
+                        response.write("Data Updated Successfully");  
                         response.end(); 
                         }).catch((err)=>{
                             console.log("err", err);
                         })
+                    } else {
+                        response.writeHead(401, {  
+                            'Content-Type': 'application/json'  
+                        });
+                        response.write("No Record Found");  
+                        response.end();
                     }
                     }
                 );
-                break;    
+                break; 
+                case '/get_device_data':
+                    try {
+
+                        new sql.Request()
+                        .query(
+                            `SELECT DISTINCT DEVICENAME FROM HIST ORDER BY DEVICENAME`,
+                            function (err, result) {
+                            if (err) throw err;
+                            response.writeHead(200, {  
+                                'Content-Type': 'application/json'  
+                            });
+                            response.write(JSON.stringify(result.recordset));  
+                            response.end(); 
+                            });
+        
+                    } catch (err) {
+                      console.error(err);
+                    } finally {
+                    }
+                    break;   
+                    case '/tas.jpg':  
+                    const imagePath = pathimg.join(__dirname, 'tas.jpg');
+                    const imageStream = fs.createReadStream(imagePath);
+                    response.writeHead(200, {'Content-Type': 'image/jpeg' });
+                    imageStream.pipe(response);
+                    break;
+
+                    case '/OTECH.jpg':  
+                    const imagePath1 = pathimg.join(__dirname, 'OTECH.jpg');
+                    const imageStream1 = fs.createReadStream(imagePath1);
+                    response.writeHead(200, {'Content-Type': 'image/jpeg' });
+                    imageStream1.pipe(response);
+                    break;
+
+                    case '/BPCL.png':  
+                    const imagePath2 = pathimg.join(__dirname, 'BPCL.png');
+                    const imageStream2 = fs.createReadStream(imagePath2);
+                    response.writeHead(200, {'Content-Type': 'image/png' });
+                    imageStream2.pipe(response);
+                    break;
             default:  
                 response.writeHead(404);  
                 response.write("opps this doesn't exist - 404");  
@@ -155,45 +212,3 @@ console.log("Server is running on Port::8082");
 //         throw err;
 //     });
 // });
-
-
-case '/get_device_data':
-                    var queryData = url.parse(request.url, true).query; 
-                    console.log("queryData.sDate", queryData.sDate); 
-                    console.log("queryData.eDate", queryData.eDate); 
-        
-                    try {
-                    const result = await connection.execute(`SELECT DISTINCT DEVICENAME FROM HIST`,
-                         [],
-                        {});
-                  
-                      console.log("Query metadata:", result.metaData);
-                      console.log("Query rows:", result.rows);
-                  
-                      response.writeHead(200, {  
-                        'Content-Type': 'application/json'  
-                    });
-                    response.write(JSON.stringify(result.rows));  
-                    response.end(); 
-        
-                    } catch (err) {
-                      console.error(err);
-                    } finally {
-                      if (connection) {
-                        try {
-                          // Connections should always be released when not needed
-                          await connection.close();
-                        } catch (err) {
-                          console.error(err);
-                        }
-                      }
-                    }
-                    break; 
-
-const pathimg = require('path');
- case '/tas.jpg':  
-                const imagePath = pathimg.join(__dirname, 'IMG.jpg');
-                const imageStream = fs.createReadStream(imagePath);
-                response.writeHead(200, {'Content-Type': 'image/jpeg' });
-                imageStream.pipe(response);
-                break;
