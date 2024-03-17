@@ -61,7 +61,11 @@ const config = {
                 console.log("queryData.sDate", queryData.sDate); 
                 console.log("queryData.eDate", queryData.eDate); 
                 console.log("fileName", queryData.fileName);
-                new sql.Request().query(
+                new sql.Request()
+                     .input('sDate', sql.Date, new Date(queryData.sDate))
+                .input('eDate', sql.Date, new Date(queryData.eDate))
+                .input('tNo', sql.Int, queryData.tNo)
+                    .query(
                     `SELECT * FROM (
                         SELECT *, ROW_NUMBER() OVER(PARTITION BY REPORTDATE ORDER BY (SELECT NULL)) as rn
                         FROM your_table
