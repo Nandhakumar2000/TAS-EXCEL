@@ -190,4 +190,14 @@ case '/get_device_data':
                     }
                     break; 
 
+
+ fetch("http://localhost:8082/get_data?sDate="+sDate+"&eDate="+eDate+"&fileName="+fileName+"&tNo="+tNo, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            }).then((response) => response.json()).then((data) => {
+            console.log("Data", data);
+            }).catch((error) => console.log(error))
+
                 `SELECT * FROM HIST WHERE (REPORTDATE, id) IN ((SELECT REPORTDATE, MIN(id) FROM HIST WHERE CAST(REPORTDATE AS NVARCHAR(50)) = '${sDate}'), (SELECT REPORTDATE, MIN(id) FROM HIST WHERE CAST(REPORTDATE AS NVARCHAR(50)) = '${eDate}') )`,
