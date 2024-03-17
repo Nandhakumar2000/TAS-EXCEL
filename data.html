@@ -1,0 +1,45 @@
+<html>  
+  
+<head>  
+    <TITLE>TAS</TITLE>  
+</head>  
+  
+<body>  
+<style>
+    body {
+        font-family: monospace;
+        text-align: center;
+    }
+</style>
+<div>
+    <h5 style="font-size: 25px;">SAP POST REPORT</h5>
+</div>
+
+</div>
+        <script type="text/javascript">
+
+        function getData(){
+            const urlParams = new URLSearchParams(window.location.search);
+            const sDate = urlParams.get('sDate');
+            const eDate = urlParams.get('eDate');
+            const fileName = urlParams.get('fileName');
+            const tNo = urlParams.get('tNo');
+            console.log("sDate", new Date(sDate).getHours() + ":" + new Date(sDate).getMinutes());
+            // let sFDate = "From: " +  new Date(sDate).getDate() + "-" + (new Date(sDate).getMonth() + 1) + "-" + new Date(sDate).getFullYear();
+            // let eFDate = "From: " +  new Date(eDate).getDate() + "-" + (new Date(eDate).getMonth() + 1) + "-" + new Date(eDate).getFullYear();
+
+            
+            fetch("http://localhost:8082/get_data?sDate="+sDate+"&eDate="+eDate+"&fileName="+fileName+"&tNo="+tNo, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            }).then((response) => response.json()).then((data) => {
+            console.log("Data", data);
+            }).catch((error) => console.log(error))
+        }
+        getData()
+            </script>
+
+</body>  
+</html>  
