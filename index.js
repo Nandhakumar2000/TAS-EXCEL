@@ -17,7 +17,6 @@ const config = {
       trustServerCertificate: true,
     },
   }
-;  
 
   function toUtcDate(dateString) {
     let date = new Date(dateString + 'Z');
@@ -62,32 +61,32 @@ const config = {
                 break;  
             case '/get_data':
                 var queryData = url.parse(request.url, true).query; 
-                console.log("queryData.sDate", queryData.sDate);
-                console.log("new Date", toUtcDate(queryData.sDate)); 
-                console.log("queryData.eDate", queryData.eDate); 
+                console.log("queryData.sDate", toUtcDate(queryData.sDate).replace('Z','').replace('T',' '));
+                console.log("queryData.eDate", toUtcDate(queryData.sDate)); 
                 console.log("fileName", queryData.fileName);
                 
                 new sql.Request()
-                .input('sDate', sql.Date, new Date(queryData.sDate))
-                .input('eDate', sql.Date, new Date(queryData.eDate))
+                .input('sDate', sql.NVarChar, toUtcDate(queryData.sDate).replace('Z','').replace('T',' '))
+                .input('eDate', sql.NVarChar, toUtcDate(queryData.eDate).replace('Z','').replace('T',' '))
                 .input('tNo', sql.Int, queryData.tNo)
                 .query(
-                    `SELECT * FROM (
-                        SELECT *, ROW_NUMBER() OVER(PARTITION BY REPORTDATE ORDER BY (SELECT NULL)) as rn
-                        FROM your_table
-                        WHERE REPORTDATE IN (@sDate, @eDate) AND DID = @tNo
+                    `
+                    SELECT * FROM (
+                        SELECT *, ROW_NUMBER() OVER(PARTITION BY CAST(REPORTDATE AS NVARCHAR(50)) ORDER BY (SELECT NULL)) as rn
+                        FROM HIST
+                        WHERE CAST(REPORTDATE AS NVARCHAR(50)) BETWEEN @sDate AND @eDate AND DID = @tNo
                     ) t
-                    WHERE rn = 1`,
+                    WHERE rn = 1
+                `,
                     function (err, result) {
                     if (err) throw err;
                     if (result?.recordset?.length == 2) {
-                       console.log("result", result.recordset);
                        const sdata = result.recordset[0];
                        const edata = result.recordset[1];
-                    XlsxPopulate.fromFileAsync(`${queryData.fileName}.xlsm`)
+                    XlsxPopulate.fromFileAsync(`${queryData.fileName}.xlsx`)
                         .then(workbook => {
                             const sheet = workbook.sheet(0);
-                            sheet.cell('E8').value(queryData.sDate); // Date
+                            sheet.cell('E8').value('Hello'); // Date
                             sheet.cell('E9').value(queryData.sDate); // Time
                             sheet.cell('E11').value(sdata['PRIMARYLVL']); // Gross Dip
                             sheet.cell('E12').value(sdata['TEMP']); // TEMP
@@ -102,15 +101,17 @@ const config = {
                             sheet.cell('G21').value(edata['DENSITY']); // DENSITY
                             sheet.cell('G26').value(edata['BSW']); // S+W
                             sheet.cell('G27').value(edata['WATERLVL']); // WATER
-
-                            return workbook.toFileAsync(`${queryData.fileName}.xlsm`);
+                            console.log("written")
+                            return workbook.toFileAsync(`${queryData.fileName}1.xlsx`);
                         }).then(() => {
                        response.writeHead(200, {  
                             'Content-Type': 'application/json'  
                         });
                         response.write(JSON.stringify(result.recordset));  
                         response.end(); 
-                        });
+                        }).catch((err)=>{
+                            console.log("err", err);
+                        })
                     }
                     }
                 );
