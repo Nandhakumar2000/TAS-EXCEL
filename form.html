@@ -4,7 +4,10 @@
     <TITLE>TAS</TITLE>  
 </head>  
   
-<body>  
+<body>
+    <img src="tas.jpg">
+   
+    <img src="IMG-20230304-WA0000.jpg" id="bpcl-img"></img>
     <style>
         body {
             font-family: Arial, Helvetica, sans-serif;
@@ -47,25 +50,72 @@
         var eDate = document.getElementById("eDate").value;
         var fileName = document.getElementById("fileName").value;
         var tNo = document.getElementById("tNo").value;
-        window.open("http://localhost:8082/data?sDate="+sDate+"&eDate="+eDate+"&fileName="+fileName+"&tNo="+tNo, "_blank");
+            
+            fetch("http://localhost:8082/get_data?sDate="+sDate+"&eDate="+eDate+"&fileName="+fileName+"&tNo="+tNo, {
+                method: "GET",
+                headers: {
+                  //  "Content-Type": "application/"
+                }
+            }).then((response) => {
+                if(response.status == 200){
+                          window.alert(
+                    "Record updated"
+                          )
+                } else if (response.status === 401){
+                    window.alert(
+                        "No record"
+                            )
+                } else{
+                    window.alert(
+                      "ERROR"
+                        )
+                }
+                
+            }).catch((error) => console.log(error))
+        
+        
        }
+
+       function getDevices() {
+        fetch("http://localhost:8082/get_device_data", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            }).then((response) => response.json()).then((data) => {
+            console.log("Data", data);
+            var select = document.getElementById("tNo");
+            select.innerHTML = "";
+// Add new options from the JSON object
+for(var i = 0; i < data.length; i++) {
+    var option = document.createElement("option");
+    option.value = data[i].DEVICENAME;
+    option.text = data[i].DEVICENAME;
+    select.appendChild(option);
+}
+            }).catch((error) => console.log(error))
+    }
+    getDevices();
+
     </script>
     <div id="form-container">
         <label for="fname">Start Date:</label><br/>
         <input type="datetime-local" id="sDate" name="sDate"><br/>
         <label for="lname">End Date:</label><br/>
         <input type="datetime-local" id="eDate" name="eDate"><br/>
-        <label for="dropdown">Choose a Template:</label><br>
+        <label for="dropdown">Choose Operation Report:</label><br>
         <select id="fileName" name="fileName">
             <option value="OTR_for_PLT">OTR for PLT</option>
             <option value="OTR_For_ITT_Dispatch_Tank">OTR For ITT Dispatch Tank</option>
             <option value="OTR_For_ITT_Receipt_Tank">OTR For ITT Receipt Tank</option>
             <option value="OTR_For_Receipt_Operation">OTR For Receipt Operation</option>
         </select><br/>
-        <label for="lname">Tank No:</label><br/>
-        <input type="text" id="tNo" name="tNo"><br/>
+        <label for="tNo">Tank Name:</label><br/>
+        <select id="tNo" name="tNo">
+        </select><br/>
         <button onclick="redirect()">Submit</button>
   </div>
 </body>  
   
 </html>  
+
