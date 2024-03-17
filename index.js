@@ -115,6 +115,16 @@ const config = {
 //     res.send(`App is Runnig on port ${port}!`);
 // });
       
+sql
+.connect(config)
+.then((pool) => {
+    console.log("DB Connected!");
+    logMessage();
+})
+.catch((err) => {
+    console.log("err", err);
+    throw err;
+});
 
 server.listen(8082);
 
