@@ -19,6 +19,10 @@ const config = {
   }
 ;  
 
+  function toUtcDate(dateString) {
+    let date = new Date(dateString + 'Z');
+    return date.toISOString();
+}
 
     var server = http.createServer(async function(request, response) {  
         var path = url.parse(request.url).pathname;  
@@ -58,18 +62,20 @@ const config = {
                 break;  
             case '/get_data':
                 var queryData = url.parse(request.url, true).query; 
-                console.log("queryData.sDate", queryData.sDate); 
+                console.log("queryData.sDate", queryData.sDate);
+                console.log("new Date", toUtcDate(queryData.sDate)); 
                 console.log("queryData.eDate", queryData.eDate); 
                 console.log("fileName", queryData.fileName);
+                
                 new sql.Request()
-                     .input('sDate', sql.Date, new Date(queryData.sDate))
+                .input('sDate', sql.Date, new Date(queryData.sDate))
                 .input('eDate', sql.Date, new Date(queryData.eDate))
                 .input('tNo', sql.Int, queryData.tNo)
-                    .query(
+                .query(
                     `SELECT * FROM (
                         SELECT *, ROW_NUMBER() OVER(PARTITION BY REPORTDATE ORDER BY (SELECT NULL)) as rn
                         FROM your_table
-                        WHERE REPORTDATE IN (${queryData.sDate}, ${queryData.eDate}) AND DID = ${queryData.tNo}
+                        WHERE REPORTDATE IN (@sDate, @eDate) AND DID = @tNo
                     ) t
                     WHERE rn = 1`,
                     function (err, result) {
