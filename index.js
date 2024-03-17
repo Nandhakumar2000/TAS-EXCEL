@@ -157,17 +157,37 @@ console.log("Server is running on Port::8082");
 // });
 
 
-let sDate = toUtcDate(queryData.sDate).replace('Z','').replace('T',' ');
-let eDate = toUtcDate(queryData.eDate).replace('Z','').replace('T',' ');
-let tNo = queryData.tNo;
-
-console.log(`
-    SELECT * FROM (
-        SELECT *, ROW_NUMBER() OVER(PARTITION BY CAST(REPORTDATE AS NVARCHAR(50)) ORDER BY (SELECT NULL)) as rn
-        FROM HIST
-        WHERE CAST(REPORTDATE AS NVARCHAR(50)) BETWEEN '${sDate}' AND '${eDate}' AND DID = ${tNo}
-    ) t
-    WHERE rn = 1
-`);
+case '/get_device_data':
+                    var queryData = url.parse(request.url, true).query; 
+                    console.log("queryData.sDate", queryData.sDate); 
+                    console.log("queryData.eDate", queryData.eDate); 
+        
+                    try {
+                    const result = await connection.execute(`SELECT DISTINCT DEVICENAME FROM HIST`,
+                         [],
+                        {});
+                  
+                      console.log("Query metadata:", result.metaData);
+                      console.log("Query rows:", result.rows);
+                  
+                      response.writeHead(200, {  
+                        'Content-Type': 'application/json'  
+                    });
+                    response.write(JSON.stringify(result.rows));  
+                    response.end(); 
+        
+                    } catch (err) {
+                      console.error(err);
+                    } finally {
+                      if (connection) {
+                        try {
+                          // Connections should always be released when not needed
+                          await connection.close();
+                        } catch (err) {
+                          console.error(err);
+                        }
+                      }
+                    }
+                    break; 
 
                 `SELECT * FROM HIST WHERE (REPORTDATE, id) IN ((SELECT REPORTDATE, MIN(id) FROM HIST WHERE CAST(REPORTDATE AS NVARCHAR(50)) = '${sDate}'), (SELECT REPORTDATE, MIN(id) FROM HIST WHERE CAST(REPORTDATE AS NVARCHAR(50)) = '${eDate}') )`,
