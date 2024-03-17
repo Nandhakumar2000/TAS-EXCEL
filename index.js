@@ -155,3 +155,17 @@ console.log("Server is running on Port::8082");
 //         throw err;
 //     });
 // });
+
+
+let sDate = toUtcDate(queryData.sDate).replace('Z','').replace('T',' ');
+let eDate = toUtcDate(queryData.eDate).replace('Z','').replace('T',' ');
+let tNo = queryData.tNo;
+
+console.log(`
+    SELECT * FROM (
+        SELECT *, ROW_NUMBER() OVER(PARTITION BY CAST(REPORTDATE AS NVARCHAR(50)) ORDER BY (SELECT NULL)) as rn
+        FROM HIST
+        WHERE CAST(REPORTDATE AS NVARCHAR(50)) BETWEEN '${sDate}' AND '${eDate}' AND DID = ${tNo}
+    ) t
+    WHERE rn = 1
+`);
